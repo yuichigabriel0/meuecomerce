@@ -1,0 +1,76 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// 1. MODELO DE CATEGORIA
+model Categoria {
+  id       String    @id @default(uuid())
+  nome     String    @unique
+  produtos Produto[]
+
+  criadoEm DateTime  @default(now())
+}
+
+// 2. MODELO DE PRODUTO (Atualizado com Categoria e relação com Itens)
+model Produto {
+  id          String   @id @default(uuid())
+  nome        String
+  preco       Float
+  estoque     Int      @default(0)
+  
+  // Relacionamento com Categoria (Chave Estrangeira)
+  categoriaId String
+  categoria   Categoria @relation(fields: [categoriaId], references: [id])
+
+  // Relação com os itens comprados nos pedidos
+  itensPedido ItemPedido[]
+
+  criadoEm    DateTime @default(now())
+}
+
+// 3. MODELO DE USUÁRIO
+model Usuario {
+  id       String   @id @default(uuid())
+  nome     String
+  email    String   @unique
+  senha    String
+  role     String   @default("CLIENTE") // "CLIENTE" ou "ADMIN"
+  
+  pedidos  Pedido[]
+
+  criadoEm DateTime @default(now())
+}
+
+// 4. MODELO DE PEDIDO
+model Pedido {
+  id         String       @id @default(uuid())
+  status     String       @default("PENDENTE") // "PENDENTE", "PAGO", "CANCELADO"
+  total      Float
+  
+  // Relacionamento com Usuario
+  usuarioId  String
+  usuario    Usuario      @relation(fields: [usuarioId], references: [id])
+
+  // Itens que pertencem a este pedido
+  itens      ItemPedido[]
+
+  criadoEm   DateTime     @default(now())
+}
+
+// 5. MODELO INTERMEDIÁRIO: ITEM DO PEDIDO
+model ItemPedido {
+  id         String  @id @default(uuid())
+  quantidade Int
+  precoUnit  Float   // Salva o preço do produto no momento da compra
+
+  pedidoId   String
+  pedido     Pedido  @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  produtoId  String
+  produto    Produto @relation(fields: [produtoId], references: [id])
+}
